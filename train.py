@@ -17,7 +17,7 @@ def arg_parser():
     parser.add_argument('--height', type=int, default=224, help='resized height of image')
     parser.add_argument('--width', type=int, default=224, help='resized width of image')
     parser.add_argument('--epoch', type=int, default=100, help='number of iteration to train')
-    parser.add_argument('--save_dir', type=str, default='/home/kotarokuroda/Documents/pytorch-retinanet/model/', help='save directory of the trained model')
+    parser.add_argument('--save_dir', type=str, default='/home/kotarokuroda/Documents/pytorch-retinanet/model/', help='directory to save the trained model')
     args = parser.parse_args()
     return args
 
