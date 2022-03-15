@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 import argparse
-import frcnn
+import retinanet
 import config
 import tqdm
 import dataloader
@@ -44,7 +44,7 @@ def train(train_loader, model, optimizer, device):
 def process(train_dir, height, width, batch_size, epoch, save_dir):
     writer = SummaryWriter()
     dataset_class = config.dataset_class
-    model = frcnn.model(dataset_class)
+    model = retinanet.model(dataset_class)
     params = [p for p in model.parameters() if p.requires_grad]
     optimizer = torch.optim.SGD(params, lr=0.0001, momentum=0.9, weight_decay=0.00005)
     scheduler = lr_scheduler.CosineAnnealingLR(optimizer, T_max=epoch, eta_min=1e-3)
