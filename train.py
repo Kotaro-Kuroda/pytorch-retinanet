@@ -12,7 +12,7 @@ from torch.optim import lr_scheduler
 
 def arg_parser():
     parser = argparse.ArgumentParser(description='Training RetinaNet')
-    parser.add_argument('--dataset', type=str, default='/home/kotarokuroda/Documents/乃木坂46/Train/', help='path to the dataset')
+    parser.add_argument('--dataset', type=str, default='./dataset/Train', help='path to the dataset')
     parser.add_argument('-b', '--batch_size', type=int, default=1, help='batch size')
     parser.add_argument('--height', type=int, default=224, help='resized height of image')
     parser.add_argument('--width', type=int, default=224, help='resized width of image')
