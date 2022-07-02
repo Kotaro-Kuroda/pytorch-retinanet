@@ -4,14 +4,15 @@ import cv2
 import numpy as np
 import config
 import torchvision
+import glob
+import os
+import tqdm
 
 
-def predict(image, model_path):
-    model = torch.load(model_path)
-    model.cuda()
-    model.eval()
+def predict(image, model):
+
     img = cv2.imread(image)
-    img = cv2.resize(img, (224, 224))
+    # img = cv2.resize(img, (224, 224))
     transform = transforms.Compose([
         transforms.ToTensor()
     ])
@@ -23,31 +24,35 @@ def predict(image, model_path):
     classes = config.dataset_class
     classes = ["__background__"] + classes
     scores = pred[0]['scores']
-    print(boxes)
-    indices = torchvision.ops.nms(boxes, scores, 0.5)
+    indices = torchvision.ops.nms(boxes, scores, 0.3)
     boxes = boxes[indices]
     scores = scores[indices]
     for i, box in enumerate(boxes):
         score = scores[i].cpu().numpy()
-        print(i)
-        box = box.cpu().numpy().astype(np.int32)
-        cat = int(pred[0]['labels'][i].cpu().numpy())
-        label = classes[cat]
-        txt = '{} {}'.format(label, str(score))
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        cat_size = cv2.getTextSize(txt, font, 0.5, 2)[0]
-        c = config.colors[int(cat)]
-        cv2.rectangle(img, (box[0], box[1]), (box[2], box[3]), c, 2)
-        cv2.rectangle(img, (box[0], box[1] - cat_size[1] - 2),
-                      (box[0] + cat_size[0], box[1] - 2), c, -1)
-        cv2.putText(img, txt, (box[0], box[1] - 2), font, 0.5, (0, 0, 0), thickness=1, lineType=cv2.LINE_AA)
-        cv2.imwrite('/home/kotarokuroda/Documents/result.jpg', img)
+        if score > 0.8:
+            box = box.cpu().numpy().astype(np.int32)
+            cat = int(pred[0]['labels'][i].cpu().numpy())
+            label = classes[cat]
+            txt = '{} {}'.format(label, str(np.round(score, 3)))
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            cat_size = cv2.getTextSize(txt, font, 0.5, 2)[0]
+            c = config.colors[int(cat)]
+            cv2.rectangle(img, (box[0], box[1]), (box[2], box[3]), c, 2)
+            cv2.rectangle(img, (box[0], box[1] - cat_size[1] - 2),
+                          (box[0] + cat_size[0], box[1] - 2), c, -1)
+            cv2.putText(img, txt, (box[0], box[1] - 2), font, 0.5, (0, 0, 0), thickness=1, lineType=cv2.LINE_AA)
+    cv2.imwrite(f'/home/kotarokuroda/Documents/pytorch-retinanet/Result/{os.path.basename(image)}', img)
 
 
 def main():
-    image = '/home/kotarokuroda/Documents/乃木坂46/Train/1f1454110705ecb16fc882d3e63ea.jpg'
-    model_path = '/home/kotarokuroda/Documents/CNN/model/model_5.pt'
-    predict(image, model_path)
+    image_dir = '/home/kotarokuroda/Documents/pytorch-retinanet/dataset/Test'
+    list_image = glob.glob(f'{image_dir}/*.jpeg')
+    model_path = '/home/kotarokuroda/Documents/pytorch-retinanet/model/model_16.pt'
+    model = torch.load(model_path)
+    model.cuda()
+    model.eval()
+    for image in tqdm.tqdm(list_image):
+        predict(image, model)
 
 
 if __name__ == '__main__':
