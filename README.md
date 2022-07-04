@@ -1,5 +1,5 @@
 # pytorch-retinanet
-In this repository, you can learn how to train and infer the [RetinaNet](https://arxiv.org/abs/1708.02002) model using pytorch.
+In this repository, you can learn how to train and infer the [RetinaNet](https://arxiv.org/abs/1708.02002) model using pytorch and you can use [Poolformer](https://arxiv.org/pdf/2111.11418.pdf) as backbone.
 
 # Create Environment
 1. Clone this repository
