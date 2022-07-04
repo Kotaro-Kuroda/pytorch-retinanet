@@ -7,8 +7,8 @@ In this repository, you can learn how to train and infer the [RetinaNet](https:/
    git clone https://github.com/Kotaro-Kuroda/pytorch-retinanet.git
    cd pytorch-retinanet
    ```
-2. Making vertual environment with venv
+2. Making vertual environment with pipenv
    ```bash
-   python -m venv .venv
+   pipenv install
    ```
 3. 
