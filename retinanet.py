@@ -21,7 +21,8 @@ def get_model(num_classes):
 
 
 def poolformer_backbone_model(num_classes):
-    plformer = poolformer.poolformer_s36(fork_feat=True)
+    return_layers = {f'norm{k}': v for v, k in enumerate([0, 2, 4, 6])}
+    plformer = poolformer.poolformer_s36(fork_feat=True, return_layers=return_layers)
     return_layers = {f'norm{k}': v for v, k in enumerate([0, 2, 4, 6])}
     in_channles_list = [64, 128, 320, 512]
     out_channels = 256

@@ -1,4 +1,3 @@
-import os
 import copy
 from typing import OrderedDict
 import torch
@@ -29,7 +28,7 @@ default_cfgs = {
 
 class PatchEmbed(nn.Module):
     """
-    Patch Embedding that is implemented by a layer of conv. 
+    Patch Embedding that is implemented by a layer of conv.
     Input: tensor in shape [B, C, H, W]
     Output: tensor in shape [B, C, H/stride, W/stride]
     """
@@ -137,9 +136,9 @@ class PoolFormerBlock(nn.Module):
     --act_layer: activation
     --norm_layer: normalization
     --drop: dropout rate
-    --drop path: Stochastic Depth, 
+    --drop path: Stochastic Depth,
         refer to https://arxiv.org/abs/1603.09382
-    --use_layer_scale, --layer_scale_init_value: LayerScale, 
+    --use_layer_scale, --layer_scale_init_value: LayerScale,
         refer to https://arxiv.org/abs/2103.17239
     """
 
@@ -170,11 +169,9 @@ class PoolFormerBlock(nn.Module):
     def forward(self, x):
         if self.use_layer_scale:
             x = x + self.drop_path(
-                self.layer_scale_1.unsqueeze(-1).unsqueeze(-1)
-                * self.token_mixer(self.norm1(x)))
+                self.layer_scale_1.unsqueeze(-1).unsqueeze(-1) * self.token_mixer(self.norm1(x)))
             x = x + self.drop_path(
-                self.layer_scale_2.unsqueeze(-1).unsqueeze(-1)
-                * self.mlp(self.norm2(x)))
+                self.layer_scale_2.unsqueeze(-1).unsqueeze(-1) * self.mlp(self.norm2(x)))
         else:
             x = x + self.drop_path(self.token_mixer(self.norm1(x)))
             x = x + self.drop_path(self.mlp(self.norm2(x)))
@@ -188,7 +185,7 @@ def basic_blocks(dim, index, layers,
                  use_layer_scale=True, layer_scale_init_value=1e-5):
     """
     generate PoolFormer blocks for a stage
-    return: PoolFormer blocks 
+    return: PoolFormer blocks
     """
     blocks = []
     for block_idx in range(layers[index]):
@@ -210,17 +207,17 @@ class PoolFormer(nn.Module):
     """
     PoolFormer, the main class of our model
     --layers: [x,x,x,x], number of blocks for the 4 stages
-    --embed_dims, --mlp_ratios, --pool_size: the embedding dims, mlp ratios and 
+    --embed_dims, --mlp_ratios, --pool_size: the embedding dims, mlp ratios and
         pooling size for the 4 stages
     --downsamples: flags to apply downsampling or not
     --norm_layer, --act_layer: define the types of normalization and activation
     --num_classes: number of classes for the image classification
     --in_patch_size, --in_stride, --in_pad: specify the patch embedding
         for the input image
-    --down_patch_size --down_stride --down_pad: 
+    --down_patch_size --down_stride --down_pad:
         specify the downsample (patch embed.)
     --fork_feat: whether output features of the 4 stages, for dense prediction
-    --init_cfg, --pretrained: 
+    --init_cfg, --pretrained:
         for mmdetection and mmsegmentation to load pretrained weights
     """
 
@@ -236,6 +233,7 @@ class PoolFormer(nn.Module):
                  fork_feat=False,
                  init_cfg=None,
                  pretrained=None,
+                 return_layers=None,
                  **kwargs):
 
         super().__init__()
@@ -272,7 +270,7 @@ class PoolFormer(nn.Module):
                 )
 
         self.network = nn.Sequential(*network)
-
+        self.return_layers = return_layers
         if self.fork_feat:
             # add a norm layer for each output
             self.out_indices = [0, 2, 4, 6]
@@ -298,9 +296,6 @@ class PoolFormer(nn.Module):
 
         self.init_cfg = copy.deepcopy(init_cfg)
         # load pre-trained model
-        if self.fork_feat and (
-                self.init_cfg is not None or pretrained is not None):
-            self.init_weights()
 
     # init for classification
     def cls_init_weights(self, m):
@@ -308,38 +303,6 @@ class PoolFormer(nn.Module):
             trunc_normal_(m.weight, std=.02)
             if isinstance(m, nn.Linear) and m.bias is not None:
                 nn.init.constant_(m.bias, 0)
-
-    # init for mmdetection or mmsegmentation by loading
-    # imagenet pre-trained weights
-    def init_weights(self, pretrained=None):
-        logger = get_root_logger()
-        if self.init_cfg is None and pretrained is None:
-            logger.warn(f'No pre-trained weights for '
-                        f'{self.__class__.__name__}, '
-                        f'training start from scratch')
-            pass
-        else:
-            assert 'checkpoint' in self.init_cfg, f'Only support ' \
-                                                  f'specify `Pretrained` in ' \
-                                                  f'`init_cfg` in ' \
-                                                  f'{self.__class__.__name__} '
-            if self.init_cfg is not None:
-                ckpt_path = self.init_cfg['checkpoint']
-            elif pretrained is not None:
-                ckpt_path = pretrained
-
-            ckpt = _load_checkpoint(
-                ckpt_path, logger=logger, map_location='cpu')
-            if 'state_dict' in ckpt:
-                _state_dict = ckpt['state_dict']
-            elif 'model' in ckpt:
-                _state_dict = ckpt['model']
-            else:
-                _state_dict = ckpt
-
-            state_dict = _state_dict
-            missing_keys, unexpected_keys = \
-                self.load_state_dict(state_dict, False)
 
             # show for debug
             # print('missing_keys: ', missing_keys)
@@ -364,7 +327,8 @@ class PoolFormer(nn.Module):
             if self.fork_feat and idx in self.out_indices:
                 norm_layer = getattr(self, f'norm{idx}')
                 x_out = norm_layer(x)
-                outs[f'norm{idx}'] = x_out
+                if f'norm{idx}' in self.return_layers.keys():
+                    outs[f'norm{idx}'] = x_out
         if self.fork_feat:
             # output the features of four stages for dense prediction
             return outs
@@ -399,7 +363,7 @@ def poolformer_s12(pretrained=False, **kwargs):
     """
     PoolFormer-S12 model, Params: 12M
     --layers: [x,x,x,x], numbers of layers for the four stages
-    --embed_dims, --mlp_ratios: 
+    --embed_dims, --mlp_ratios:
         embedding dims and mlp ratios for the four stages
     --downsamples: flags to apply downsampling or not in four blocks
     """

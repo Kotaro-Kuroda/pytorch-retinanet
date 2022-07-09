@@ -1,23 +1,25 @@
 import torch
 from torchvision import transforms
-import cv2
 import numpy as np
 import config
 import torchvision
 import glob
 import os
 import tqdm
+import jpeg4py
+import cv2
 
 
-def predict(image, model):
-
-    img = cv2.imread(image)
-    # img = cv2.resize(img, (224, 224))
+def predict(image, model, height, width):
+    img = jpeg4py.JPEG(image).decode()
     transform = transforms.Compose([
-        transforms.ToTensor()
+        transforms.ToTensor(),
+        transforms.Resize(height, width),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                             std=[0.229, 0.224, 0.225])
     ])
     tensor_img = transform(img).cuda()
-    # img = img.unsqueeze(0)
+    tensor_img = tensor_img.unsqueeze(0)
     with torch.no_grad():
         pred = model([tensor_img])
     boxes = pred[0]['boxes']

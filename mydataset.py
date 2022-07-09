@@ -2,9 +2,9 @@ import xml.etree.ElementTree as ET
 import torch
 import glob
 from torchvision import transforms
-import cv2
 import numpy as np
 import os
+import jpeg4py
 
 
 class XML2List:
@@ -43,29 +43,29 @@ class MyDataset(torch.utils.data.Dataset):
         self.width = width
         self.classes = classes
         self.list_image = glob.glob(f'{self.image_dir}/*.jpg')
+        self.transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Resize(self.height, self.width),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                 std=[0.229, 0.224, 0.225])
+        ])
         self.list_image_array = [(self._read_image(image)) for image in self.list_image]
 
     def _read_image(self, image):
-        img = cv2.imread(image)
+        img = jpeg4py.JPEG(image).decode()
         h, w = img.shape[:2]
-        img = cv2.resize(img, dsize=(self.width, self.height))
-        return img, h, w
+        tensor_img = self.transform(img)
+        return tensor_img, h, w
 
     def __getitem__(self, index):
-
-        transform = transforms.Compose([
-            transforms.ToTensor()
-        ])
         image_name = self.list_image[index]
         path_xml = f'{os.path.splitext(image_name)[0]}.xml'
         image, h, w = self.list_image_array[index]
-
         transform_anno = XML2List(self.classes)
         annotations, obje_num = transform_anno(path_xml)
         boxes = annotations['bboxes']
         boxes = boxes * np.array([self.width / w, self.height / h, self.width / w, self.height / h])
         boxes = torch.as_tensor(boxes, dtype=torch.int64)
-        image = transform(image)
         labels = torch.as_tensor(annotations['labels'], dtype=torch.int64)
         area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
         area = torch.as_tensor(area, dtype=torch.float32)

@@ -13,8 +13,15 @@ torch = "*"
 torchvision = "*"
 torchaudio = "*"
 jpeg4py = "*"
+tqdm = "*"
+matplotlib = "*"
+opencv-python-headless = "*"
+timm = "*"
+tensorboard = "*"
 
 [dev-packages]
+flake8 = "*"
+autopep8 = "*"
 
 [requires]
 python_version = "3.9"

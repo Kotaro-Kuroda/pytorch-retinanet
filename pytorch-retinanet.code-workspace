@@ -1,0 +1,24 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"editor.formatOnSave": true,
+		"workbench.colorTheme": "Sublime Monokai Adaptive",
+		"python.linting.pylintEnabled": false,
+		"python.linting.flake8Enabled": true,
+		"python.formatting.autopep8Args": [
+			"--ignore=E501"
+		],
+		"python.linting.flake8Args": [
+			"--ignore=E501,E302"
+		],
+		"git.autofetch": true,
+		"python.defaultInterpreterPath": "/home/kotarokuroda/.local/share/virtualenvs/pytorch-retinanet-bZgw3wuq/bin/python",
+		"python.analysis.extraPaths": [
+			"/home/kotarokuroda/.local/share/virtualenvs/pytorch-retinanet-bZgw3wuq/lib/python3.9/site-packages/"
+		],
+	}
+}

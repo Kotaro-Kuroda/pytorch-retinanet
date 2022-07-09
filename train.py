@@ -4,7 +4,7 @@ import argparse
 import retinanet
 import config
 import tqdm
-import dataloader
+import mydataset
 from torch.utils.tensorboard import SummaryWriter
 import os
 from torch.optim import lr_scheduler
@@ -55,7 +55,7 @@ def process(train_dir, height, width, batch_size, epoch, save_dir):
         'cuda') if torch.cuda.is_available() else torch.device('cpu')
     model.to(device)
     model.train()
-    train_loader = dataloader.dataloader(
+    train_loader = mydataset.dataloader(
         train_dir, dataset_class, batch_size, height, width)
     for e in tqdm.tqdm(range(epoch)):
         scheduler.step()
