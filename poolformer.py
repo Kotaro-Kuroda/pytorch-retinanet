@@ -1,3 +1,4 @@
+import os
 import copy
 from typing import OrderedDict
 import torch
@@ -136,9 +137,9 @@ class PoolFormerBlock(nn.Module):
     --act_layer: activation
     --norm_layer: normalization
     --drop: dropout rate
-    --drop path: Stochastic Depth,
+    --drop path: Stochastic Depth, 
         refer to https://arxiv.org/abs/1603.09382
-    --use_layer_scale, --layer_scale_init_value: LayerScale,
+    --use_layer_scale, --layer_scale_init_value: LayerScale, 
         refer to https://arxiv.org/abs/2103.17239
     """
 
@@ -169,9 +170,11 @@ class PoolFormerBlock(nn.Module):
     def forward(self, x):
         if self.use_layer_scale:
             x = x + self.drop_path(
-                self.layer_scale_1.unsqueeze(-1).unsqueeze(-1) * self.token_mixer(self.norm1(x)))
+                self.layer_scale_1.unsqueeze(-1).unsqueeze(-1)
+                * self.token_mixer(self.norm1(x)))
             x = x + self.drop_path(
-                self.layer_scale_2.unsqueeze(-1).unsqueeze(-1) * self.mlp(self.norm2(x)))
+                self.layer_scale_2.unsqueeze(-1).unsqueeze(-1)
+                * self.mlp(self.norm2(x)))
         else:
             x = x + self.drop_path(self.token_mixer(self.norm1(x)))
             x = x + self.drop_path(self.mlp(self.norm2(x)))
@@ -207,17 +210,17 @@ class PoolFormer(nn.Module):
     """
     PoolFormer, the main class of our model
     --layers: [x,x,x,x], number of blocks for the 4 stages
-    --embed_dims, --mlp_ratios, --pool_size: the embedding dims, mlp ratios and
+    --embed_dims, --mlp_ratios, --pool_size: the embedding dims, mlp ratios and 
         pooling size for the 4 stages
     --downsamples: flags to apply downsampling or not
     --norm_layer, --act_layer: define the types of normalization and activation
     --num_classes: number of classes for the image classification
     --in_patch_size, --in_stride, --in_pad: specify the patch embedding
         for the input image
-    --down_patch_size --down_stride --down_pad:
+    --down_patch_size --down_stride --down_pad: 
         specify the downsample (patch embed.)
     --fork_feat: whether output features of the 4 stages, for dense prediction
-    --init_cfg, --pretrained:
+    --init_cfg, --pretrained: 
         for mmdetection and mmsegmentation to load pretrained weights
     """
 
@@ -241,7 +244,7 @@ class PoolFormer(nn.Module):
         if not fork_feat:
             self.num_classes = num_classes
         self.fork_feat = fork_feat
-
+        self.return_layers = return_layers
         self.patch_embed = PatchEmbed(
             patch_size=in_patch_size, stride=in_stride, padding=in_pad,
             in_chans=3, embed_dim=embed_dims[0])
@@ -270,7 +273,7 @@ class PoolFormer(nn.Module):
                 )
 
         self.network = nn.Sequential(*network)
-        self.return_layers = return_layers
+
         if self.fork_feat:
             # add a norm layer for each output
             self.out_indices = [0, 2, 4, 6]
@@ -304,9 +307,8 @@ class PoolFormer(nn.Module):
             if isinstance(m, nn.Linear) and m.bias is not None:
                 nn.init.constant_(m.bias, 0)
 
-            # show for debug
-            # print('missing_keys: ', missing_keys)
-            # print('unexpected_keys: ', unexpected_keys)
+    # init for mmdetection or mmsegmentation by loading
+    # imagenet pre-trained weights
 
     def get_classifier(self):
         return self.head
@@ -363,7 +365,7 @@ def poolformer_s12(pretrained=False, **kwargs):
     """
     PoolFormer-S12 model, Params: 12M
     --layers: [x,x,x,x], numbers of layers for the four stages
-    --embed_dims, --mlp_ratios:
+    --embed_dims, --mlp_ratios: 
         embedding dims and mlp ratios for the four stages
     --downsamples: flags to apply downsampling or not in four blocks
     """
@@ -379,7 +381,9 @@ def poolformer_s12(pretrained=False, **kwargs):
     if pretrained:
         url = model_urls['poolformer_s12']
         checkpoint = torch.hub.load_state_dict_from_url(url=url, map_location="cpu", check_hash=True)
-        model.load_state_dict(checkpoint)
+        for key in checkpoint.keys():
+            if key in model.state_dict().keys():
+                model.state_dict()[key] = checkpoint[key]
     return model
 
 
@@ -400,7 +404,9 @@ def poolformer_s24(pretrained=False, **kwargs):
     if pretrained:
         url = model_urls['poolformer_s24']
         checkpoint = torch.hub.load_state_dict_from_url(url=url, map_location="cpu", check_hash=True)
-        model.load_state_dict(checkpoint)
+        for key in checkpoint.keys():
+            if key in model.state_dict().keys():
+                model.state_dict()[key] = checkpoint[key]
     return model
 
 
@@ -422,7 +428,9 @@ def poolformer_s36(pretrained=False, **kwargs):
     if pretrained:
         url = model_urls['poolformer_s36']
         checkpoint = torch.hub.load_state_dict_from_url(url=url, map_location="cpu", check_hash=True)
-        model.load_state_dict(checkpoint)
+        for key in checkpoint.keys():
+            if key in model.state_dict().keys():
+                model.state_dict()[key] = checkpoint[key]
     return model
 
 
